@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>You Are the Pancreas: Blood Glucose Regulation Simulation</title>
+  <style>
+    :root {
+      --bg: #f7f4ef;
+      --card: #ffffff;
+      --ink: #222222;
+      --muted: #5c5c5c;
+      --primary: #7b3f98;
+      --primary-light: #f1e7f7;
+      --secondary: #1f7a8c;
+      --secondary-light: #e4f5f7;
+      --warning: #b65c00;
+      --warning-light: #fff1df;
+      --success: #2f7d32;
+      --success-light: #e9f6ea;
+      --danger: #b3261e;
+      --danger-light: #fdecea;
+      --border: #ded8cf;
+      --shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(135deg, #f7f4ef 0%, #eef7f8 100%);
+      color: var(--ink);
+      line-height: 1.5;
+    }
+
+    .app {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    header {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    h1, h2, h3 {
+      margin-top: 0;
+      line-height: 1.15;
+    }
+
+    h1 {
+      font-size: clamp(1.8rem, 3vw, 3rem);
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 1.05rem;
+      max-width: 850px;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .badge {
+      background: var(--primary-light);
+      color: var(--primary);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    @media (min-width: 900px) {
+      .grid.two {
+        grid-template-columns: 0.85fr 1.15fr;
+      }
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    .patient-card {
+      border-left: 8px solid var(--primary);
+    }
+
+    .status-card {
+      border-left: 8px solid var(--secondary);
+    }
+
+    .patient-detail {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .detail-box {
+      background: #fafafa;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .detail-box strong {
+      display: block;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+
+    .meter-wrap {
+      margin: 16px 0;
+    }
+
+    .meter-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .meter {
+      height: 18px;
+      background: #ececec;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid #d0d0d0;
+    }
+
+    .meter-fill {
+      height: 100%;
+      width: 50%;
+      background: var(--secondary);
+      transition: width 0.4s ease, background 0.4s ease;
+    }
+
+    .event-banner {
+      background: var(--secondary-light);
+      border: 1px solid #bee6eb;
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+
+    .event-banner h2 {
+      color: var(--secondary);
+      margin-bottom: 8px;
+    }
+
+    .glucose-number {
+      font-size: 2.4rem;
+      font-weight: 900;
+      color: var(--primary);
+      margin: 4px 0;
+    }
+
+    .decision-group {
+      margin: 18px 0;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fcfcfc;
+    }
+
+    .decision-group h3 {
+      font-size: 1.05rem;
+      margin-bottom: 10px;
+    }
+
+    .options {
+      display: grid;
+      gap: 10px;
+    }
+
+    @media (min-width: 700px) {
+      .options.three {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    button, .option-button {
+      border: 2px solid var(--border);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+      text-align: left;
+    }
+
+    button:hover, .option-button:hover {
+      transform: translateY(-1px);
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .option-button.selected {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+      font-weight: 700;
+    }
+
+    .action-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .primary-btn {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .secondary-btn {
+      background: var(--secondary);
+      color: #fff;
+      border-color: var(--secondary);
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .ghost-btn {
+      background: #fff;
+      color: var(--primary);
+      border-color: var(--primary);
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .feedback {
+      margin-top: 18px;
+      border-radius: var(--radius);
+      padding: 16px;
+      border: 1px solid var(--border);
+      display: none;
+    }
+
+    .feedback.show {
+      display: block;
+    }
+
+    .feedback.good {
+      background: var(--success-light);
+      border-color: #badfbd;
+    }
+
+    .feedback.mixed {
+      background: var(--warning-light);
+      border-color: #ffd1a3;
+    }
+
+    .feedback.needs-work {
+      background: var(--danger-light);
+      border-color: #f2b8b5;
+    }
+
+    .feedback h3 {
+      margin-bottom: 8px;
+    }
+
+    .explain-box {
+      width: 100%;
+      min-height: 100px;
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      font-size: 1rem;
+      font-family: Arial, Helvetica, sans-serif;
+      resize: vertical;
+    }
+
+    .progress {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 12px 0 4px;
+    }
+
+    .dot {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      background: #fff;
+      color: var(--muted);
+    }
+
+    .dot.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .dot.complete {
+      background: var(--success);
+      color: #fff;
+      border-color: var(--success);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    .summary-table th,
+    .summary-table td {
+      border: 1px solid var(--border);
+      padding: 10px;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    .summary-table th {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .copy-box {
+      width: 100%;
+      min-height: 250px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 2px dashed var(--primary);
+      font-family: Consolas, Monaco, monospace;
+      font-size: 0.92rem;
+      background: #fff;
+      white-space: pre-wrap;
+    }
+
+    .small-note {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .callout {
+      background: var(--warning-light);
+      border: 1px solid #ffd1a3;
+      border-left: 8px solid var(--warning);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-top: 16px;
+    }
+
+    .screen-reader-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>You Are the Pancreas™</h1>
+      <p class="subtitle">An interactive blood glucose regulation simulation. Make hormone decisions, predict fuel use, and explain how the body responds to carbohydrate intake, fasting, and diabetes risk.</p>
+      <div class="badge-row" aria-label="Concepts covered">
+        <span class="badge">Insulin</span>
+        <span class="badge">Glucagon</span>
+        <span class="badge">Blood Glucose</span>
+        <span class="badge">Glycogen</span>
+        <span class="badge">Fasting</span>
+        <span class="badge">Type 2 Diabetes</span>
+      </div>
+    </header>
+
+    <section id="introScreen" class="grid two">
+      <div class="card patient-card">
+        <h2>Your Mission</h2>
+        <p>You are controlling the hormonal response of a patient’s body across a day. For each event, choose what should happen to insulin, glucagon, glycogen, and the main fuel source.</p>
+        <p>Your goal is not just to get points. Your goal is to explain the physiology clearly enough that someone else could understand what is happening.</p>
+        <div class="callout">
+          <strong>Submission tip:</strong> At the end, you will receive a completion summary. Copy and paste it into Canvas or use it to write your reflection.
+        </div>
+      </div>
+
+      <div class="card status-card">
+        <h2>Choose a Patient Profile</h2>
+        <p class="small-note">Your profile changes the physiology and makes your pathway unique.</p>
+        <div class="options" id="patientOptions"></div>
+        <div class="action-row">
+          <button class="primary-btn" id="startBtn">Start Simulation</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="simulationScreen" class="hidden">
+      <div class="grid two">
+        <aside class="card patient-card">
+          <h2>Patient Profile</h2>
+          <div id="patientProfile"></div>
+          <div class="meter-wrap">
+            <div class="meter-label">
+              <span>Blood Glucose</span>
+              <span id="glucoseLabel">-- mg/dL</span>
+            </div>
+            <div class="meter" aria-hidden="true">
+              <div class="meter-fill" id="glucoseMeter"></div>
+            </div>
+            <p class="small-note" id="glucoseStatus"></p>
+          </div>
+          <h3>Progress</h3>
+          <div class="progress" id="progressDots"></div>
+          <p class="small-note">Complete each event before moving forward.</p>
+        </aside>
+
+        <section class="card">
+          <div class="event-banner">
+            <h2 id="eventTitle">Event Title</h2>
+            <p id="eventDescription"></p>
+            <div class="glucose-number" id="eventGlucose">-- mg/dL</div>
+            <p class="small-note" id="eventSymptoms"></p>
+          </div>
+
+          <form id="decisionForm">
+            <div class="decision-group">
+              <h3>1. What should happen to insulin?</h3>
+              <div class="options three" data-question="insulin">
+                <button type="button" class="option-button" data-value="increase">Increase</button>
+                <button type="button" class="option-button" data-value="decrease">Decrease</button>
+                <button type="button" class="option-button" data-value="stable">Remain stable</button>
+              </div>
+            </div>
+
+            <div class="decision-group">
+              <h3>2. What should happen to glucagon?</h3>
+              <div class="options three" data-question="glucagon">
+                <button type="button" class="option-button" data-value="increase">Increase</button>
+                <button type="button" class="option-button" data-value="decrease">Decrease</button>
+                <button type="button" class="option-button" data-value="stable">Remain stable</button>
+              </div>
+            </div>
+
+            <div class="decision-group">
+              <h3>3. What is happening with glycogen?</h3>
+              <div class="options" data-question="glycogen">
+                <button type="button" class="option-button" data-value="store">The body is storing glucose as glycogen.</button>
+                <button type="button" class="option-button" data-value="breakdown">The body is breaking down glycogen to release glucose.</button>
+                <button type="button" class="option-button" data-value="limited">Glycogen is limited/depleted, so other pathways become more important.</button>
+              </div>
+            </div>
+
+            <div class="decision-group">
+              <h3>4. What is the main fuel situation?</h3>
+              <div class="options" data-question="fuel">
+                <button type="button" class="option-button" data-value="glucose">Blood glucose from recent carbohydrate intake is readily available.</button>
+                <button type="button" class="option-button" data-value="mixed">The body is using a mix of blood glucose and stored glycogen.</button>
+                <button type="button" class="option-button" data-value="alternative">The body is shifting toward alternative fuel sources, such as fat and ketones.</button>
+              </div>
+            </div>
+
+            <div class="decision-group">
+              <h3>5. Explain your reasoning.</h3>
+              <label class="screen-reader-only" for="studentExplanation">Explain your reasoning</label>
+              <textarea id="studentExplanation" class="explain-box" placeholder="Explain WHY your hormone and fuel decisions make sense. Use terms like insulin, glucagon, glycogen, liver, glucose, fasting, or insulin resistance when relevant."></textarea>
+            </div>
+
+            <div class="action-row">
+              <button type="button" class="primary-btn" id="checkBtn">Check My Decisions</button>
+              <button type="button" class="secondary-btn hidden" id="nextBtn">Next Event</button>
+            </div>
+          </form>
+
+          <div class="feedback" id="feedbackBox" aria-live="polite"></div>
+        </section>
+      </div>
+    </section>
+
+    <section id="summaryScreen" class="hidden">
+      <div class="card">
+        <h2>Simulation Complete</h2>
+        <p>You completed the pancreas simulation. Review your summary below and copy it into Canvas if your instructor asks for evidence of completion.</p>
+        <div id="scoreSummary"></div>
+        <h3>Copy/Paste Completion Summary</h3>
+        <textarea id="copySummary" class="copy-box" readonly></textarea>
+        <div class="action-row">
+          <button class="primary-btn" id="copyBtn">Copy Summary</button>
+          <button class="ghost-btn" id="restartBtn">Restart Simulation</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const patientProfiles = [
+      {
+        id: "normal",
+        name: "Maya: Typical Glucose Regulation",
+        description: "Maya has typical insulin sensitivity and no known diabetes diagnosis.",
+        details: {
+          Age: "22",
+          Context: "College student with a busy schedule",
+          KeyIssue: "Normal hormone response, but inconsistent meals"
+        }
+      },
+      {
+        id: "prediabetes",
+        name: "Jordan: Insulin Resistance Risk",
+        description: "Jordan has prediabetes and mild insulin resistance. Blood glucose may remain elevated longer after high-carbohydrate meals.",
+        details: {
+          Age: "38",
+          Context: "Sedentary job, family history of Type 2 diabetes",
+          KeyIssue: "Cells do not respond as efficiently to insulin"
+        }
+      },
+      {
+        id: "athlete",
+        name: "Ari: Endurance Athlete",
+        description: "Ari trains regularly and uses glycogen heavily during long workouts.",
+        details: {
+          Age: "29",
+          Context: "Training for a half marathon",
+          KeyIssue: "Glycogen storage and breakdown are especially important"
+        }
+      }
+    ];
+
+    const events = [
+      {
+        title: "Event 1: High-Carbohydrate Breakfast",
+        description: "Your patient has a large sweet coffee drink, a bagel, and orange juice before class.",
+        symptoms: "Possible feeling: quick energy, followed by potential hunger later.",
+        glucoseByProfile: { normal: 145, prediabetes: 185, athlete: 135 },
+        correct: {
+          insulin: "increase",
+          glucagon: "decrease",
+          glycogen: "store",
+          fuel: "glucose"
+        },
+        feedback: "After a carbohydrate-rich meal, blood glucose rises. Insulin should increase to help glucose move into cells and support storage as glycogen. Glucagon should decrease because the body does not need to release more glucose from the liver right now."
+      },
+      {
+        title: "Event 2: Four Hours Later, No Snack",
+        description: "Several hours have passed. Your patient has not eaten again and walked across campus between classes.",
+        symptoms: "Possible feeling: mild hunger or lower energy if the meal was digested quickly.",
+        glucoseByProfile: { normal: 88, prediabetes: 112, athlete: 82 },
+        correct: {
+          insulin: "decrease",
+          glucagon: "increase",
+          glycogen: "breakdown",
+          fuel: "mixed"
+        },
+        feedback: "As time passes after a meal, blood glucose begins to fall. Insulin decreases, glucagon increases, and the liver can break down glycogen to help maintain blood glucose."
+      },
+      {
+        title: "Event 3: Long Study Session with Sugary Snack",
+        description: "Your patient eats candy and drinks a regular soda while studying late in the afternoon.",
+        symptoms: "Possible feeling: rapid energy boost, then later fatigue or hunger.",
+        glucoseByProfile: { normal: 155, prediabetes: 205, athlete: 148 },
+        correct: {
+          insulin: "increase",
+          glucagon: "decrease",
+          glycogen: "store",
+          fuel: "glucose"
+        },
+        feedback: "Sugary snacks and drinks can raise blood glucose quickly. Insulin should increase. In insulin resistance, blood glucose may remain elevated because cells do not respond as effectively to insulin."
+      },
+      {
+        title: "Event 4: Overnight Fast",
+        description: "Your patient sleeps overnight and wakes up before eating breakfast.",
+        symptoms: "Possible feeling: hunger, but blood glucose is usually maintained by liver activity.",
+        glucoseByProfile: { normal: 78, prediabetes: 104, athlete: 74 },
+        correct: {
+          insulin: "decrease",
+          glucagon: "increase",
+          glycogen: "breakdown",
+          fuel: "mixed"
+        },
+        feedback: "During an overnight fast, insulin is lower and glucagon helps maintain blood glucose. The liver breaks down glycogen and may begin using other pathways if fasting continues."
+      },
+      {
+        title: "Event 5: Extended Fast or Very Low-Carb Day",
+        description: "Your patient goes much longer without carbohydrate intake than usual. Glycogen stores become limited.",
+        symptoms: "Possible feeling: fatigue, headache, lightheadedness, or adaptation to alternative fuel use.",
+        glucoseByProfile: { normal: 70, prediabetes: 92, athlete: 66 },
+        correct: {
+          insulin: "decrease",
+          glucagon: "increase",
+          glycogen: "limited",
+          fuel: "alternative"
+        },
+        feedback: "When carbohydrate intake is very low or fasting is extended, glycogen stores become limited. Insulin stays lower, glucagon remains active, and the body shifts toward alternative fuels such as fat and ketones while also using gluconeogenesis to help maintain blood glucose."
+      }
+    ];
+
+    let selectedProfile = patientProfiles[0];
+    let currentEventIndex = 0;
+    let answers = {};
+    let results = [];
+    let checkedCurrent = false;
+
+    const patientOptions = document.getElementById("patientOptions");
+    const startBtn = document.getElementById("startBtn");
+    const introScreen = document.getElementById("introScreen");
+    const simulationScreen = document.getElementById("simulationScreen");
+    const summaryScreen = document.getElementById("summaryScreen");
+    const patientProfile = document.getElementById("patientProfile");
+    const glucoseLabel = document.getElementById("glucoseLabel");
+    const glucoseMeter = document.getElementById("glucoseMeter");
+    const glucoseStatus = document.getElementById("glucoseStatus");
+    const progressDots = document.getElementById("progressDots");
+    const eventTitle = document.getElementById("eventTitle");
+    const eventDescription = document.getElementById("eventDescription");
+    const eventGlucose = document.getElementById("eventGlucose");
+    const eventSymptoms = document.getElementById("eventSymptoms");
+    const feedbackBox = document.getElementById("feedbackBox");
+    const checkBtn = document.getElementById("checkBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const studentExplanation = document.getElementById("studentExplanation");
+    const scoreSummary = document.getElementById("scoreSummary");
+    const copySummary = document.getElementById("copySummary");
+    const copyBtn = document.getElementById("copyBtn");
+    const restartBtn = document.getElementById("restartBtn");
+
+    function initPatientOptions() {
+      patientOptions.innerHTML = "";
+      patientProfiles.forEach((profile, index) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "option-button" + (index === 0 ? " selected" : "");
+        btn.innerHTML = `<strong>${profile.name}</strong><br><span>${profile.description}</span>`;
+        btn.addEventListener("click", () => {
+          selectedProfile = profile;
+          document.querySelectorAll("#patientOptions .option-button").forEach(b => b.classList.remove("selected"));
+          btn.classList.add("selected");
+        });
+        patientOptions.appendChild(btn);
+      });
+    }
+
+    function renderPatientProfile() {
+      const details = Object.entries(selectedProfile.details)
+        .map(([key, value]) => `<div class="detail-box"><strong>${key.replace("KeyIssue", "Key Issue")}</strong>${value}</div>`)
+        .join("");
+      patientProfile.innerHTML = `
+        <h3>${selectedProfile.name}</h3>
+        <p>${selectedProfile.description}</p>
+        <div class="patient-detail">${details}</div>
+      `;
+    }
+
+    function getGlucoseStatus(glucose) {
+      if (glucose < 70) return { text: "Low blood glucose range. The body needs to protect the brain’s glucose supply.", color: "var(--danger)", width: 18 };
+      if (glucose <= 99) return { text: "Typical fasting/pre-meal range for many people.", color: "var(--success)", width: 38 };
+      if (glucose <= 140) return { text: "Moderate blood glucose level. Context matters: fasting vs after meal.", color: "var(--secondary)", width: 55 };
+      if (glucose <= 180) return { text: "Elevated after-meal blood glucose. Insulin response is important.", color: "var(--warning)", width: 76 };
+      return { text: "High blood glucose level. This is especially concerning if glucose remains elevated.", color: "var(--danger)", width: 95 };
+    }
+
+    function renderProgress() {
+      progressDots.innerHTML = "";
+      events.forEach((event, index) => {
+        const dot = document.createElement("div");
+        dot.className = "dot";
+        if (index < currentEventIndex) dot.classList.add("complete");
+        if (index === currentEventIndex) dot.classList.add("active");
+        dot.textContent = index + 1;
+        progressDots.appendChild(dot);
+      });
+    }
+
+    function renderEvent() {
+      checkedCurrent = false;
+      answers = {};
+      feedbackBox.className = "feedback";
+      feedbackBox.innerHTML = "";
+      nextBtn.classList.add("hidden");
+      checkBtn.classList.remove("hidden");
+      studentExplanation.value = "";
+      document.querySelectorAll("#decisionForm .option-button").forEach(btn => btn.classList.remove("selected"));
+
+      const event = events[currentEventIndex];
+      const glucose = event.glucoseByProfile[selectedProfile.id];
+      const status = getGlucoseStatus(glucose);
+
+      eventTitle.textContent = event.title;
+      eventDescription.textContent = event.description;
+      eventGlucose.textContent = `${glucose} mg/dL`;
+      eventSymptoms.textContent = event.symptoms;
+      glucoseLabel.textContent = `${glucose} mg/dL`;
+      glucoseStatus.textContent = status.text;
+      glucoseMeter.style.width = `${status.width}%`;
+      glucoseMeter.style.background = status.color;
+
+      renderProgress();
+    }
+
+    function setupDecisionButtons() {
+      document.querySelectorAll("#decisionForm .options").forEach(group => {
+        group.addEventListener("click", event => {
+          const btn = event.target.closest(".option-button");
+          if (!btn || checkedCurrent) return;
+          const question = group.dataset.question;
+          answers[question] = btn.dataset.value;
+          group.querySelectorAll(".option-button").forEach(b => b.classList.remove("selected"));
+          btn.classList.add("selected");
+        });
+      });
+    }
+
+    function checkAnswers() {
+      const required = ["insulin", "glucagon", "glycogen", "fuel"];
+      const missing = required.filter(key => !answers[key]);
+      const explanation = studentExplanation.value.trim();
+
+      if (missing.length > 0 || explanation.length < 40) {
+        feedbackBox.className = "feedback show needs-work";
+        feedbackBox.innerHTML = `
+          <h3>Before checking, complete all decisions.</h3>
+          <p>Please answer every decision question and write at least 2-3 sentences explaining your reasoning.</p>
+        `;
+        return;
+      }
+
+      const event = events[currentEventIndex];
+      let correctCount = 0;
+      required.forEach(key => {
+        if (answers[key] === event.correct[key]) correctCount++;
+      });
+
+      const explanationKeywords = ["insulin", "glucagon", "glycogen", "glucose", "blood sugar", "liver", "fast", "fasting", "ketone", "diabetes", "resistance"];
+      const lowerExplanation = explanation.toLowerCase();
+      const keywordCount = explanationKeywords.filter(word => lowerExplanation.includes(word)).length;
+      const explanationCredit = keywordCount >= 3 ? 1 : 0;
+      const total = correctCount + explanationCredit;
+      const percentage = Math.round((total / 5) * 100);
+
+      let feedbackClass = "needs-work";
+      let heading = "Keep Working on the Physiology";
+      if (percentage >= 80) {
+        feedbackClass = "good";
+        heading = "Strong Pancreas Decision-Making";
+      } else if (percentage >= 60) {
+        feedbackClass = "mixed";
+        heading = "Partly Correct — Refine the Mechanism";
+      }
+
+      const comparisonRows = required.map(key => {
+        const label = key.charAt(0).toUpperCase() + key.slice(1);
+        const isCorrect = answers[key] === event.correct[key];
+        return `<li><strong>${label}:</strong> Your answer: ${formatAnswer(answers[key])}. Expected: ${formatAnswer(event.correct[key])}. ${isCorrect ? "✅" : "🔄"}</li>`;
+      }).join("");
+
+      feedbackBox.className = `feedback show ${feedbackClass}`;
+      feedbackBox.innerHTML = `
+        <h3>${heading}</h3>
+        <p><strong>Score for this event:</strong> ${total}/5</p>
+        <ul>${comparisonRows}</ul>
+        <p><strong>Physiology Feedback:</strong> ${event.feedback}</p>
+        <p><strong>Explanation check:</strong> ${explanationCredit ? "Your explanation used relevant physiology terms." : "Try adding more specific physiology terms, such as insulin, glucagon, glycogen, liver, or blood glucose."}</p>
+      `;
+
+      results.push({
+        eventTitle: event.title,
+        glucose: event.glucoseByProfile[selectedProfile.id],
+        answers: { ...answers },
+        correct: { ...event.correct },
+        explanation,
+        score: total,
+        percentage
+      });
+
+      checkedCurrent = true;
+      checkBtn.classList.add("hidden");
+      nextBtn.classList.remove("hidden");
+      document.querySelectorAll("#decisionForm .option-button").forEach(btn => btn.disabled = true);
+    }
+
+    function formatAnswer(value) {
+      const map = {
+        increase: "increase",
+        decrease: "decrease",
+        stable: "remain stable",
+        store: "store glycogen",
+        breakdown: "break down glycogen",
+        limited: "glycogen limited/depleted",
+        glucose: "recent glucose available",
+        mixed: "mixed glucose/glycogen use",
+        alternative: "alternative fuel shift"
+      };
+      return map[value] || value;
+    }
+
+    function nextEvent() {
+      document.querySelectorAll("#decisionForm .option-button").forEach(btn => btn.disabled = false);
+      currentEventIndex++;
+      if (currentEventIndex >= events.length) {
+        showSummary();
+      } else {
+        renderEvent();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+
+    function showSummary() {
+      simulationScreen.classList.add("hidden");
+      summaryScreen.classList.remove("hidden");
+      const totalScore = results.reduce((sum, item) => sum + item.score, 0);
+      const maxScore = events.length * 5;
+      const percent = Math.round((totalScore / maxScore) * 100);
+
+      const rows = results.map((item, index) => `
+        <tr>
+          <td>${index + 1}. ${item.eventTitle}</td>
+          <td>${item.glucose} mg/dL</td>
+          <td>${item.score}/5</td>
+          <td>${item.explanation}</td>
+        </tr>
+      `).join("");
+
+      scoreSummary.innerHTML = `
+        <p><strong>Patient profile:</strong> ${selectedProfile.name}</p>
+        <p><strong>Total score:</strong> ${totalScore}/${maxScore} (${percent}%)</p>
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th>Event</th>
+              <th>Glucose</th>
+              <th>Score</th>
+              <th>Your Explanation</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+
+      copySummary.value = buildCopySummary(totalScore, maxScore, percent);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function buildCopySummary(totalScore, maxScore, percent) {
+      let text = "You Are the Pancreas Simulation Completion Summary\n";
+      text += "=================================================\n";
+      text += `Patient Profile: ${selectedProfile.name}\n`;
+      text += `Total Score: ${totalScore}/${maxScore} (${percent}%)\n\n`;
+      results.forEach((item, index) => {
+        text += `Event ${index + 1}: ${item.eventTitle}\n`;
+        text += `Blood Glucose: ${item.glucose} mg/dL\n`;
+        text += `Score: ${item.score}/5\n`;
+        text += `My Decisions:\n`;
+        text += `- Insulin: ${formatAnswer(item.answers.insulin)}\n`;
+        text += `- Glucagon: ${formatAnswer(item.answers.glucagon)}\n`;
+        text += `- Glycogen: ${formatAnswer(item.answers.glycogen)}\n`;
+        text += `- Fuel Situation: ${formatAnswer(item.answers.fuel)}\n`;
+        text += `My Explanation: ${item.explanation}\n\n`;
+      });
+      text += "Reflection Prompt: One concept I understand better after completing this simulation is...\n";
+      return text;
+    }
+
+    async function copyToClipboard() {
+      try {
+        await navigator.clipboard.writeText(copySummary.value);
+        copyBtn.textContent = "Copied!";
+        setTimeout(() => copyBtn.textContent = "Copy Summary", 1800);
+      } catch (error) {
+        copySummary.select();
+        document.execCommand("copy");
+        copyBtn.textContent = "Copied!";
+        setTimeout(() => copyBtn.textContent = "Copy Summary", 1800);
+      }
+    }
+
+    function restart() {
+      currentEventIndex = 0;
+      answers = {};
+      results = [];
+      checkedCurrent = false;
+      summaryScreen.classList.add("hidden");
+      introScreen.classList.remove("hidden");
+      document.querySelectorAll("#decisionForm .option-button").forEach(btn => {
+        btn.disabled = false;
+        btn.classList.remove("selected");
+      });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    startBtn.addEventListener("click", () => {
+      introScreen.classList.add("hidden");
+      simulationScreen.classList.remove("hidden");
+      renderPatientProfile();
+      renderEvent();
+    });
+
+    checkBtn.addEventListener("click", checkAnswers);
+    nextBtn.addEventListener("click", nextEvent);
+    copyBtn.addEventListener("click", copyToClipboard);
+    restartBtn.addEventListener("click", restart);
+
+    initPatientOptions();
+    setupDecisionButtons();
+  </script>
+</body>
+</html>
