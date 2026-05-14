@@ -518,13 +518,23 @@
     <section id="summaryScreen" class="hidden">
       <div class="card">
         <h2>Simulation Complete</h2>
-        <p>You completed the pancreas simulation. Review your summary below and copy it into Canvas if your instructor asks for evidence of completion.</p>
+        <p>You completed the pancreas simulation. Review your summary below. Then use the PDF button to save a copy and upload it to your Canvas assignment.</p>
+        <div class="callout">
+          <strong>Canvas Upload Directions:</strong>
+          <ol>
+            <li>Click <strong>Download/Save PDF for Canvas</strong>.</li>
+            <li>When the print window opens, choose <strong>Save as PDF</strong> or <strong>Microsoft Print to PDF</strong> as the destination.</li>
+            <li>Save the file using this format: <strong>LastName_FirstName_PancreasSimulation.pdf</strong>.</li>
+            <li>Go to the Canvas assignment for this activity.</li>
+            <li>Upload your saved PDF file and submit the assignment.</li>
+          </ol>
+        </div>
         <div id="scoreSummary"></div>
         <h3>Copy/Paste Completion Summary</h3>
         <textarea id="copySummary" class="copy-box" readonly></textarea>
         <div class="action-row">
           <button class="primary-btn" id="copyBtn">Copy Summary</button>
-          <button class="ghost-btn" id="restartBtn">Restart Simulation</button>
+          <button class="ghost-btn" id="pdfBtn">Download/Save PDF for Canvas</button>
         </div>
       </div>
     </section>
@@ -659,7 +669,7 @@
     const scoreSummary = document.getElementById("scoreSummary");
     const copySummary = document.getElementById("copySummary");
     const copyBtn = document.getElementById("copyBtn");
-    const restartBtn = document.getElementById("restartBtn");
+    const pdfBtn = document.getElementById("pdfBtn");
 
     function initPatientOptions() {
       patientOptions.innerHTML = "";
@@ -910,18 +920,79 @@
       }
     }
 
-    function restart() {
-      currentEventIndex = 0;
-      answers = {};
-      results = [];
-      checkedCurrent = false;
-      summaryScreen.classList.add("hidden");
-      introScreen.classList.remove("hidden");
-      document.querySelectorAll("#decisionForm .option-button").forEach(btn => {
-        btn.disabled = false;
-        btn.classList.remove("selected");
-      });
-      window.scrollTo({ top: 0, behavior: "smooth" });
+    function downloadPdf() {
+      const totalScore = results.reduce((sum, item) => sum + item.score, 0);
+      const maxScore = events.length * 5;
+      const percent = Math.round((totalScore / maxScore) * 100);
+      const summaryText = buildCopySummary(totalScore, maxScore, percent);
+
+      const printWindow = window.open("", "_blank");
+      const safeSummary = summaryText
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <title>You Are the Pancreas Submission</title>
+          <style>
+            body {
+              font-family: Arial, Helvetica, sans-serif;
+              line-height: 1.45;
+              color: #222;
+              padding: 32px;
+            }
+            h1 {
+              color: #7b3f98;
+              margin-bottom: 6px;
+            }
+            .directions {
+              border: 2px solid #7b3f98;
+              background: #f1e7f7;
+              padding: 16px;
+              border-radius: 12px;
+              margin: 18px 0;
+            }
+            pre {
+              white-space: pre-wrap;
+              font-family: Arial, Helvetica, sans-serif;
+              border: 1px solid #ccc;
+              padding: 16px;
+              border-radius: 12px;
+              background: #fafafa;
+            }
+            @media print {
+              body { padding: 12px; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <h1>You Are the Pancreas™ Simulation</h1>
+          <p><strong>Canvas Submission PDF</strong></p>
+          <div class="directions">
+            <h2>Directions for Canvas Upload</h2>
+            <ol>
+              <li>In the print window, choose <strong>Save as PDF</strong> or <strong>Microsoft Print to PDF</strong>.</li>
+              <li>Save the file using this format: <strong>LastName_FirstName_PancreasSimulation.pdf</strong>.</li>
+              <li>Go to the Canvas assignment for this activity.</li>
+              <li>Upload this saved PDF file and submit the assignment.</li>
+            </ol>
+          </div>
+          <pre>${safeSummary}</pre>
+          <p class="no-print">Use your browser print option now. Choose “Save as PDF” as the destination.</p>
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          <\/script>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
     }
 
     startBtn.addEventListener("click", () => {
@@ -934,7 +1005,7 @@
     checkBtn.addEventListener("click", checkAnswers);
     nextBtn.addEventListener("click", nextEvent);
     copyBtn.addEventListener("click", copyToClipboard);
-    restartBtn.addEventListener("click", restart);
+    pdfBtn.addEventListener("click", downloadPdf);
 
     initPatientOptions();
     setupDecisionButtons();
